@@ -63,6 +63,27 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
+        .progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+            width: 0%;
+            transition: width 0.2s ease;
+            z-index: 101;
+        }
+
+        .progress-bar.active {
+            animation: loading 2s infinite;
+        }
+
+        @keyframes loading {
+            0% { width: 10%; }
+            50% { width: 70%; }
+            100% { width: 90%; }
+        }
+
         .main-content {
             flex: 1;
             display: flex;
@@ -138,9 +159,6 @@
             font-size: 12px;
             color: #ccc;
             margin-bottom: 8px;
-            max-height: 2em;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .image-tags {
@@ -172,14 +190,16 @@
             height: 100%;
             font-size: 24px;
             color: #666;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .spinner {
             border: 4px solid #333;
-            border-top: 4px solid #fff;
+            border-top: 4px solid #0ea5e9;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
         }
 
@@ -383,28 +403,10 @@
             z-index: 10;
         }
 
-        .error-message {
-            color: #ef4444;
-            font-size: 12px;
-            margin-top: 8px;
-            padding: 8px;
-            background: rgba(239, 68, 68, 0.1);
-            border-radius: 4px;
-        }
-
-        .liked-count {
-            font-size: 12px;
-            color: #666;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #333;
-        }
-
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin-top: 12px;
         }
 
         .stat {
@@ -426,20 +428,29 @@
             margin-top: 4px;
         }
 
-        .scrollbar-hint {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 24px;
-            color: rgba(255, 255, 255, 0.2);
-            pointer-events: none;
-            animation: float 3s ease-in-out infinite;
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(-50%) translateX(0); }
-            50% { transform: translateY(-50%) translateX(5px); }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #999;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #0ea5e9;
+            border-color: #0ea5e9;
+            color: #fff;
         }
 
         .search-modal {
@@ -473,10 +484,6 @@
             border-radius: 8px;
             color: #fff;
             font-size: 16px;
-        }
-
-        .search-input::placeholder {
-            color: #666;
         }
 
         .search-input:focus {
@@ -520,79 +527,22 @@
             border-color: #0ea5e9;
         }
 
-        .settings-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 300;
-            flex-direction: column;
-            padding: 20px;
+        .liked-count {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
         }
 
-        .settings-modal.active {
-            display: flex;
-        }
-
-        .settings-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .settings-content {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .setting-item {
-            background: #2a2a2a;
-            padding: 15px;
+        .error-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
             border-radius: 8px;
-            margin-bottom: 12px;
-            border: 1px solid #333;
-        }
-
-        .setting-item label {
-            display: block;
-            font-size: 14px;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .setting-item input[type="checkbox"] {
-            margin-right: 8px;
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 10px;
+            padding: 15px;
+            color: #fca5a5;
+            text-align: center;
             margin-bottom: 20px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 6px;
-            color: #999;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .tab-btn.active {
-            background: #0ea5e9;
-            border-color: #0ea5e9;
-            color: #fff;
         }
 
         @media (min-width: 768px) {
@@ -625,31 +575,19 @@
                 font-size: 18px;
             }
 
-            .header-btn {
-                width: 36px;
-                height: 36px;
-                font-size: 18px;
-            }
-
             .like-btn {
                 width: 50px;
                 height: 50px;
                 font-size: 22px;
                 bottom: 60px;
             }
-
-            .info-text {
-                font-size: 11px;
-            }
-
-            .image-info {
-                padding: 15px;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="progress-bar" id="progressBar"></div>
+        
         <div class="header">
             <button class="header-btn" id="menuBtn" title="Menu">☰</button>
             <div class="header-title">scrollowo</div>
@@ -693,7 +631,7 @@
                         <div class="stats">
                             <div class="stat">
                                 <div class="value" id="totalImages">0</div>
-                                <div class="label">Total Loaded</div>
+                                <div class="label">Loaded</div>
                             </div>
                             <div class="stat">
                                 <div class="value" id="currentIndex">0</div>
@@ -705,10 +643,10 @@
 
                 <div id="curated-tab" class="tab-content" style="display: none;">
                     <div class="sidebar-section">
-                        <h3>Curated Tags (From Likes)</h3>
+                        <h3>Curated Tags</h3>
                         <div class="active-tags" id="curatedTags"></div>
                         <div style="margin-top: 12px; font-size: 12px; color: #666;">
-                            Tags are auto-generated from your liked images. Like more images to improve curation.
+                            Generated from your likes
                         </div>
                     </div>
                 </div>
@@ -716,17 +654,19 @@
                 <div id="settings-tab" class="tab-content" style="display: none;">
                     <div class="sidebar-section">
                         <h3>Settings</h3>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="autoSuggestToggle" checked> Auto-suggest tags from likes
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                                <input type="checkbox" id="autoSuggestToggle" checked>
+                                Auto-suggest tags
                             </label>
                         </div>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="curateFromLikesToggle" checked> Use likes to curate feed
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                                <input type="checkbox" id="curateFromLikesToggle" checked>
+                                Curate from likes
                             </label>
                         </div>
-                        <button class="control-btn" id="clearLikesBtn" style="margin-top: 12px;">Clear All Likes</button>
+                        <button class="control-btn" id="clearLikesBtn" style="margin-top: 12px;">Clear Likes</button>
                         <button class="control-btn" id="exportDataBtn" style="margin-top: 8px;">Export Data</button>
                     </div>
                 </div>
@@ -737,7 +677,6 @@
             <div class="feed">
                 <div id="imageStack"></div>
                 <button class="like-btn" id="likeBtn" title="Like this image">♡</button>
-                <div class="scrollbar-hint" id="scrollHint">⟳</div>
                 <div class="info-text">
                     <div id="imageCount">0 / 0</div>
                 </div>
@@ -750,556 +689,13 @@
             <input type="text" class="search-input" id="tagSearchInput" placeholder="Search tags...">
             <button class="search-close" id="searchCloseBtn">✕</button>
         </div>
+        <div id="errorContainer"></div>
         <div id="suggestedTagsContainer">
             <h3 style="margin-bottom: 12px; color: #999; font-size: 12px;">POPULAR TAGS</h3>
             <div class="suggested-tags" id="suggestedTags"></div>
         </div>
     </div>
 
-    <script>
-        const API_BASE = 'https://e621.net/posts.json';
-        const BATCH_SIZE = 20;
-        const LIKE_STORAGE_KEY = 'e621_liked_posts';
-        const TAGS_STORAGE_KEY = 'e621_active_tags';
-        const CURATED_TAGS_STORAGE_KEY = 'e621_curated_tags';
-        const SETTINGS_STORAGE_KEY = 'e621_settings';
-
-        let images = [];
-        let currentIndex = 0;
-        let activeTags = [];
-        let curatedTags = [];
-        let likedPosts = new Set();
-        let isLoading = false;
-        let hasMorePages = true;
-        let pageNumber = 1;
-        let useCuratedFeed = false;
-        let settings = {
-            autoSuggest: true,
-            curateFromLikes: true
-        };
-
-        const popularTags = [
-            'cat', 'dog', 'wolf', 'fox', 'dragon', 'furry', 'anthro', 'cute',
-            'comic', 'artwork', 'sketch', 'animation', 'digital', 'traditional',
-            'character', 'oc', 'original character', 'nsfw', 'safe', 'questionable'
-        ];
-
-        // Initialize
-        function init() {
-            loadSettings();
-            initLikedPosts();
-            loadActiveTags();
-            loadCuratedTags();
-            setupEventListeners();
-            updateStats();
-            renderTags();
-            renderCuratedTags();
-            updateSettingsUI();
-        }
-
-        // Settings Management
-        function loadSettings() {
-            const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
-            if (stored) {
-                settings = JSON.parse(stored);
-            }
-        }
-
-        function saveSettings() {
-            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-        }
-
-        function updateSettingsUI() {
-            document.getElementById('autoSuggestToggle').checked = settings.autoSuggest;
-            document.getElementById('curateFromLikesToggle').checked = settings.curateFromLikes;
-        }
-
-        // Liked Posts Management
-        function initLikedPosts() {
-            const stored = localStorage.getItem(LIKE_STORAGE_KEY);
-            if (stored) {
-                likedPosts = new Set(JSON.parse(stored));
-            }
-            updateLikedCount();
-        }
-
-        function saveLikedPosts() {
-            localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(Array.from(likedPosts)));
-        }
-
-        // Tags Management
-        function loadActiveTags() {
-            const stored = localStorage.getItem(TAGS_STORAGE_KEY);
-            if (stored) {
-                activeTags = JSON.parse(stored);
-            }
-        }
-
-        function saveActiveTags() {
-            localStorage.setItem(TAGS_STORAGE_KEY, JSON.stringify(activeTags));
-        }
-
-        function loadCuratedTags() {
-            const stored = localStorage.getItem(CURATED_TAGS_STORAGE_KEY);
-            if (stored) {
-                curatedTags = JSON.parse(stored);
-            }
-        }
-
-        function saveCuratedTags() {
-            localStorage.setItem(CURATED_TAGS_STORAGE_KEY, JSON.stringify(curatedTags));
-        }
-
-        // Curate tags from liked posts
-        function updateCuratedTags() {
-            if (!settings.autoSuggest || likedPosts.size === 0) return;
-
-            const tagFrequency = {};
-            let count = 0;
-
-            for (const postId of likedPosts) {
-                const post = images.find(p => p.id === postId);
-                if (post && post.tags) {
-                    const allTags = [
-                        ...(post.tags.general || []),
-                        ...(post.tags.character || []),
-                        ...(post.tags.species || [])
-                    ];
-
-                    allTags.forEach(tag => {
-                        tagFrequency[tag] = (tagFrequency[tag] || 0) + 1;
-                    });
-                }
-                count++;
-                if (count >= 50) break; // Limit to last 50 likes
-            }
-
-            curatedTags = Object.entries(tagFrequency)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 15)
-                .map(([tag]) => tag);
-
-            saveCuratedTags();
-            renderCuratedTags();
-        }
-
-        // Fetch images from e621
-        async function fetchImages() {
-            if (isLoading || !hasMorePages) return;
-
-            isLoading = true;
-            showLoading();
-
-            try {
-                let tagsToUse = [...activeTags];
-
-                // Add curated tags if using curated feed
-                if (useCuratedFeed && settings.curateFromLikes && curatedTags.length > 0) {
-                    // Mix active and curated tags
-                    const randomCurated = curatedTags[Math.floor(Math.random() * curatedTags.length)];
-                    if (!tagsToUse.includes(randomCurated)) {
-                        tagsToUse.push(randomCurated);
-                    }
-                }
-
-                const tags = tagsToUse.join(' ');
-                const params = new URLSearchParams({
-                    tags: tags,
-                    limit: BATCH_SIZE,
-                    page: pageNumber,
-                });
-
-                const response = await fetch(`${API_BASE}?${params}`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                const data = await response.json();
-
-                if (!data.posts || data.posts.length === 0) {
-                    hasMorePages = false;
-                    if (images.length === 0) {
-                        showMessage('No images found. Try different tags.');
-                    }
-                    isLoading = false;
-                    return;
-                }
-
-                const validPosts = data.posts.filter(post => post.file && post.file.url);
-                images.push(...validPosts);
-
-                pageNumber++;
-                if (validPosts.length < BATCH_SIZE) {
-                    hasMorePages = false;
-                }
-
-                updateStats();
-                renderImage();
-                hideLoading();
-            } catch (error) {
-                console.error('Error fetching images:', error);
-                showMessage(`Error: ${error.message}`);
-                hideLoading();
-            }
-
-            isLoading = false;
-        }
-
-        // UI Functions
-        function showLoading() {
-            const stack = document.getElementById('imageStack');
-            if (stack.children.length === 0) {
-                stack.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-            }
-        }
-
-        function hideLoading() {
-            const stack = document.getElementById('imageStack');
-            if (stack.querySelector('.loading')) {
-                stack.innerHTML = '';
-            }
-        }
-
-        function showMessage(msg) {
-            const stack = document.getElementById('imageStack');
-            stack.innerHTML = `<div class="loading" style="font-size: 18px; color: #ccc;">${msg}</div>`;
-        }
-
-        function renderImage() {
-            const stack = document.getElementById('imageStack');
-
-            if (images.length === 0) {
-                showMessage('No images loaded. Add tags to get started!');
-                return;
-            }
-
-            if (currentIndex >= images.length) {
-                if (currentIndex > images.length - 5 && hasMorePages) {
-                    fetchImages();
-                }
-                return;
-            }
-
-            const post = images[currentIndex];
-            const container = document.createElement('div');
-            container.className = 'image-container';
-
-            const img = document.createElement('img');
-            img.src = post.file.url;
-            img.alt = 'e621 image';
-            img.onerror = () => {
-                nextImage();
-            };
-
-            const info = document.createElement('div');
-            info.className = 'image-info';
-            
-            const desc = document.createElement('div');
-            desc.className = 'image-description';
-            desc.textContent = `Post #${post.id}`;
-
-            const tags = document.createElement('div');
-            tags.className = 'image-tags';
-            const allTags = [
-                ...(post.tags.general || []),
-                ...(post.tags.character || []),
-                ...(post.tags.species || [])
-            ];
-            tags.innerHTML = allTags.slice(0, 20).map(tag => `<div class="image-tag">${tag}</div>`).join('');
-
-            info.appendChild(desc);
-            info.appendChild(tags);
-            
-            info.addEventListener('click', () => {
-                info.classList.toggle('expanded');
-            });
-
-            container.appendChild(img);
-            container.appendChild(info);
-            stack.innerHTML = '';
-            stack.appendChild(container);
-
-            updateLikeButton();
-            updateStats();
-        }
-
-        function nextImage() {
-            const current = document.querySelector('.image-container');
-            if (current) {
-                current.classList.add('exiting');
-                setTimeout(() => {
-                    if (currentIndex < images.length - 1) {
-                        currentIndex++;
-                        renderImage();
-                        if (currentIndex > images.length - 5 && hasMorePages && !isLoading) {
-                            fetchImages();
-                        }
-                    } else if (hasMorePages && !isLoading) {
-                        fetchImages();
-                    }
-                }, 300);
-            }
-        }
-
-        function prevImage() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                renderImage();
-            }
-        }
-
-        function updateLikeButton() {
-            const likeBtn = document.getElementById('likeBtn');
-            const isLiked = likedPosts.has(images[currentIndex].id);
-            if (isLiked) {
-                likeBtn.classList.add('liked');
-                likeBtn.textContent = '❤';
-            } else {
-                likeBtn.classList.remove('liked');
-                likeBtn.textContent = '♡';
-            }
-        }
-
-        function toggleLike() {
-            if (images.length === 0) return;
-            const postId = images[currentIndex].id;
-            if (likedPosts.has(postId)) {
-                likedPosts.delete(postId);
-            } else {
-                likedPosts.add(postId);
-            }
-            saveLikedPosts();
-            updateLikeButton();
-            updateLikedCount();
-            updateCuratedTags();
-        }
-
-        function updateLikedCount() {
-            document.getElementById('likedCount').textContent = likedPosts.size;
-        }
-
-        function updateStats() {
-            document.getElementById('imageCount').textContent = `${currentIndex + 1} / ${images.length}`;
-            document.getElementById('totalImages').textContent = images.length;
-            document.getElementById('currentIndex').textContent = currentIndex + 1;
-        }
-
-        function addTag(tag) {
-            tag = tag.trim().toLowerCase();
-
-            if (!tag) return;
-            if (activeTags.includes(tag)) return;
-            if (activeTags.length >= 10) {
-                alert('Maximum 10 tags allowed');
-                return;
-            }
-
-            activeTags.push(tag);
-            saveActiveTags();
-            renderTags();
-            resetFeed();
-            fetchImages();
-            closeSidebar();
-            closeSearch();
-        }
-
-        function removeTag(tag) {
-            activeTags = activeTags.filter(t => t !== tag);
-            saveActiveTags();
-            renderTags();
-            resetFeed();
-            if (activeTags.length > 0) {
-                fetchImages();
-            }
-        }
-
-        function renderTags() {
-            const container = document.getElementById('activeTags');
-            container.innerHTML = activeTags.map(tag => `
-                <div class="tag">
-                    ${tag}
-                    <button class="tag-remove" onclick="window.app.removeTag('${tag}')">×</button>
-                </div>
-            `).join('');
-        }
-
-        function renderCuratedTags() {
-            const container = document.getElementById('curatedTags');
-            if (curatedTags.length === 0) {
-                container.innerHTML = '<div style="font-size: 12px; color: #666;">Like more images to see curated tags</div>';
-                return;
-            }
-            container.innerHTML = curatedTags.map(tag => `
-                <div class="tag" style="cursor: pointer;" onclick="window.app.addTagFromCurated('${tag}')">
-                    ${tag}
-                    <span style="margin-left: 4px;">+</span>
-                </div>
-            `).join('');
-        }
-
-        function renderSuggestedTags() {
-            const container = document.getElementById('suggestedTags');
-            container.innerHTML = popularTags.map(tag => `
-                <div class="suggested-tag" onclick="window.app.addTag('${tag}')">${tag}</div>
-            `).join('');
-        }
-
-        function resetFeed() {
-            images = [];
-            currentIndex = 0;
-            pageNumber = 1;
-            hasMorePages = true;
-            updateStats();
-        }
-
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebarOverlay').classList.remove('visible');
-        }
-
-        function openSidebar() {
-            document.getElementById('sidebar').classList.add('open');
-            document.getElementById('sidebarOverlay').classList.add('visible');
-        }
-
-        function closeSearch() {
-            document.getElementById('searchModal').classList.remove('active');
-            document.getElementById('tagSearchInput').value = '';
-        }
-
-        function openSearch() {
-            document.getElementById('searchModal').classList.add('active');
-            renderSuggestedTags();
-            document.getElementById('tagSearchInput').focus();
-        }
-
-        // Event Listeners
-        function setupEventListeners() {
-            // Menu
-            document.getElementById('menuBtn').addEventListener('click', openSidebar);
-            document.getElementById('closeSidebarBtn').addEventListener('click', closeSidebar);
-            document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
-
-            // Search
-            document.getElementById('searchBtn').addEventListener('click', openSearch);
-            document.getElementById('searchCloseBtn').addEventListener('click', closeSearch);
-
-            document.getElementById('tagSearchInput').addEventListener('keypress', e => {
-                if (e.key === 'Enter') {
-                    addTag(e.target.value);
-                }
-            });
-
-            // Tab switching
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-                    e.target.classList.add('active');
-                    document.getElementById(e.target.dataset.tab + '-tab').style.display = 'block';
-                });
-            });
-
-            // Buttons
-            document.getElementById('likeBtn').addEventListener('click', toggleLike);
-            document.getElementById('refreshBtn').addEventListener('click', () => {
-                resetFeed();
-                fetchImages();
-            });
-            document.getElementById('clearTagsBtn').addEventListener('click', () => {
-                activeTags = [];
-                saveActiveTags();
-                renderTags();
-                resetFeed();
-                updateStats();
-            });
-            document.getElementById('clearLikesBtn').addEventListener('click', () => {
-                if (confirm('Clear all likes?')) {
-                    likedPosts.clear();
-                    saveLikedPosts();
-                    updateLikedCount();
-                    curatedTags = [];
-                    saveCuratedTags();
-                    renderCuratedTags();
-                }
-            });
-            document.getElementById('exportDataBtn').addEventListener('click', () => {
-                const data = {
-                    tags: activeTags,
-                    likes: Array.from(likedPosts),
-                    curatedTags: curatedTags
-                };
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'scrollowo-data.json';
-                a.click();
-                URL.revokeObjectURL(url);
-            });
-
-            // Settings
-            document.getElementById('autoSuggestToggle').addEventListener('change', (e) => {
-                settings.autoSuggest = e.target.checked;
-                saveSettings();
-            });
-            document.getElementById('curateFromLikesToggle').addEventListener('change', (e) => {
-                settings.curateFromLikes = e.target.checked;
-                saveSettings();
-            });
-
-            // Scroll
-            document.addEventListener('wheel', e => {
-                e.preventDefault();
-                if (e.deltaY > 0) {
-                    nextImage();
-                } else {
-                    prevImage();
-                }
-            }, { passive: false });
-
-            // Touch
-            let touchStartY = 0;
-            document.addEventListener('touchstart', e => {
-                if (!document.getElementById('searchModal').classList.contains('active')) {
-                    touchStartY = e.touches[0].clientY;
-                }
-            });
-            document.addEventListener('touchend', e => {
-                const touchEndY = e.changedTouches[0].clientY;
-                const diff = touchStartY - touchEndY;
-                if (Math.abs(diff) > 50) {
-                    if (diff > 0) {
-                        nextImage();
-                    } else {
-                        prevImage();
-                    }
-                }
-            });
-
-            // Keyboard
-            document.addEventListener('keydown', e => {
-                if (e.key === 'ArrowDown' || e.key === ' ') {
-                    e.preventDefault();
-                    nextImage();
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    prevImage();
-                } else if (e.key === 'l' || e.key === 'L') {
-                    toggleLike();
-                }
-            });
-        }
-
-        // Expose globally
-        window.app = {
-            removeTag,
-            addTag,
-            addTagFromCurated: (tag) => {
-                addTag(tag);
-            }
-        };
-
-        // Initialize
-        init();
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
