@@ -1,6 +1,7 @@
 const API_BASE = 'https://e621.net/posts.json';
-const BATCH_SIZE = 20;
+const BATCH_SIZE = 10;
 const LIKE_STORAGE_KEY = 'e621_liked_posts';
+const DISLIKE_STORAGE_KEY = 'e621_disliked_posts';
 const TAGS_STORAGE_KEY = 'e621_active_tags';
 const CURATED_TAGS_STORAGE_KEY = 'e621_curated_tags';
 const SETTINGS_STORAGE_KEY = 'e621_settings';
@@ -10,12 +11,14 @@ let currentIndex = 0;
 let activeTags = [];
 let curatedTags = [];
 let likedPosts = new Set();
+let dislikedPosts = new Set();
 let isLoading = false;
 let hasMorePages = true;
 let pageNumber = 1;
 let settings = {
     autoSuggest: true,
-    curateFromLikes: true
+    curateFromLikes: true,
+    particles: true
 };
 
 const popularTags = [
@@ -24,10 +27,13 @@ const popularTags = [
     'character', 'oc', 'original character', 'nsfw', 'safe', 'questionable'
 ];
 
+const particles = ['✨', '💫', '⭐', '✨', '💥', '🌟'];
+
 // Initialize
 function init() {
     loadSettings();
     initLikedPosts();
+    initDislikedPosts();
     loadActiveTags();
     loadCuratedTags();
     setupEventListeners();
@@ -36,6 +42,7 @@ function init() {
     renderCuratedTags();
     updateSettingsUI();
     renderSuggestedTags();
+    fetchImages();
 }
 
 // Settings Management
@@ -53,6 +60,7 @@ function saveSettings() {
 function updateSettingsUI() {
     document.getElementById('autoSuggestToggle').checked = settings.autoSuggest;
     document.getElementById('curateFromLikesToggle').checked = settings.curateFromLikes;
+    document.getElementById('particlesToggle').checked = settings.particles;
 }
 
 // Liked Posts Management
@@ -66,6 +74,19 @@ function initLikedPosts() {
 
 function saveLikedPosts() {
     localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(Array.from(likedPosts)));
+}
+
+// Disliked Posts Management
+function initDislikedPosts() {
+    const stored = localStorage.getItem(DISLIKE_STORAGE_KEY);
+    if (stored) {
+        dislikedPosts = new Set(JSON.parse(stored));
+    }
+    updateDislikedCount();
+}
+
+function saveDislikedPosts() {
+    localStorage.setItem(DISLIKE_STORAGE_KEY, JSON.stringify(Array.from(dislikedPosts)));
 }
 
 // Tags Management
@@ -89,6 +110,21 @@ function loadCuratedTags() {
 
 function saveCuratedTags() {
     localStorage.setItem(CURATED_TAGS_STORAGE_KEY, JSON.stringify(curatedTags));
+}
+
+// Particle effects
+function createParticle(x, y, emoji) {
+    if (!settings.particles) return;
+    
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.textContent = emoji;
+    particle.style.left = x + 'px';
+    particle.style.top = y + 'px';
+    particle.style.setProperty('--tx', (Math.random() - 0.5) * 100 + 'px');
+    
+    document.body.appendChild(particle);
+    setTimeout(() => particle.remove(), 1500);
 }
 
 // Curate tags from liked posts
@@ -144,7 +180,9 @@ async function fetchImages() {
     if (isLoading || !hasMorePages) return;
 
     isLoading = true;
-    showLoading();
+    if (images.length === 0) {
+        showLoading();
+    }
     showProgressBar();
 
     try {
@@ -179,12 +217,16 @@ async function fetchImages() {
         }
 
         updateStats();
-        renderImage();
+        if (currentIndex === 0) {
+            renderImage();
+        }
         hideLoading();
         hideProgressBar();
     } catch (error) {
         console.error('Error fetching images:', error);
-        showMessage(`Error: ${error.message}<br><br>Make sure you have added tags first!`);
+        if (images.length === 0) {
+            showMessage(`Error: ${error.message}<br><br>Make sure you have added tags first!`);
+        }
         hideLoading();
         hideProgressBar();
     }
@@ -221,7 +263,7 @@ function renderImage() {
     }
 
     if (currentIndex >= images.length) {
-        if (currentIndex > images.length - 5 && hasMorePages) {
+        if (hasMorePages && !isLoading) {
             fetchImages();
         }
         return;
@@ -230,6 +272,9 @@ function renderImage() {
     const post = images[currentIndex];
     const container = document.createElement('div');
     container.className = 'image-container';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'image-wrapper';
 
     const img = document.createElement('img');
     img.src = post.file.url;
@@ -261,13 +306,19 @@ function renderImage() {
         info.classList.toggle('expanded');
     });
 
-    container.appendChild(img);
+    wrapper.appendChild(img);
+    container.appendChild(wrapper);
     container.appendChild(info);
     stack.innerHTML = '';
     stack.appendChild(container);
 
     updateLikeButton();
     updateStats();
+
+    // Prefetch next image
+    if (currentIndex > images.length - 3 && hasMorePages && !isLoading) {
+        fetchImages();
+    }
 }
 
 function nextImage() {
@@ -278,9 +329,6 @@ function nextImage() {
             if (currentIndex < images.length - 1) {
                 currentIndex++;
                 renderImage();
-                if (currentIndex > images.length - 5 && hasMorePages && !isLoading) {
-                    fetchImages();
-                }
             } else if (hasMorePages && !isLoading) {
                 fetchImages();
             }
@@ -297,23 +345,37 @@ function prevImage() {
 
 function updateLikeButton() {
     const likeBtn = document.getElementById('likeBtn');
-    const isLiked = likedPosts.has(images[currentIndex].id);
-    if (isLiked) {
+    const dislikeBtn = document.getElementById('dislikeBtn');
+    const postId = images[currentIndex]?.id;
+
+    if (likedPosts.has(postId)) {
         likeBtn.classList.add('liked');
         likeBtn.textContent = '❤';
     } else {
         likeBtn.classList.remove('liked');
         likeBtn.textContent = '♡';
     }
+
+    if (dislikedPosts.has(postId)) {
+        dislikeBtn.classList.add('disliked');
+        dislikeBtn.textContent = '👎';
+    } else {
+        dislikeBtn.classList.remove('disliked');
+        dislikeBtn.textContent = '👎';
+    }
 }
 
 function toggleLike() {
     if (images.length === 0) return;
     const postId = images[currentIndex].id;
+    const likeBtn = document.getElementById('likeBtn');
+    
     if (likedPosts.has(postId)) {
         likedPosts.delete(postId);
     } else {
         likedPosts.add(postId);
+        dislikedPosts.delete(postId);
+        createParticle(likeBtn.offsetLeft + 25, likeBtn.offsetTop + 25, '❤');
     }
     saveLikedPosts();
     updateLikeButton();
@@ -321,8 +383,29 @@ function toggleLike() {
     updateCuratedTags();
 }
 
+function toggleDislike() {
+    if (images.length === 0) return;
+    const postId = images[currentIndex].id;
+    const dislikeBtn = document.getElementById('dislikeBtn');
+    
+    if (dislikedPosts.has(postId)) {
+        dislikedPosts.delete(postId);
+    } else {
+        dislikedPosts.add(postId);
+        likedPosts.delete(postId);
+        createParticle(dislikeBtn.offsetLeft + 25, dislikeBtn.offsetTop + 25, '💫');
+    }
+    saveDislikedPosts();
+    updateLikeButton();
+    updateDislikedCount();
+}
+
 function updateLikedCount() {
-    document.getElementById('likedCount').textContent = likedPosts.size;
+    document.getElementById('likedCount').textContent = likedPosts.size + ' liked';
+}
+
+function updateDislikedCount() {
+    document.getElementById('dislikedCount').textContent = dislikedPosts.size + ' disliked';
 }
 
 function updateStats() {
@@ -448,6 +531,7 @@ function setupEventListeners() {
 
     // Buttons
     document.getElementById('likeBtn').addEventListener('click', toggleLike);
+    document.getElementById('dislikeBtn').addEventListener('click', toggleDislike);
     document.getElementById('refreshBtn').addEventListener('click', () => {
         resetFeed();
         fetchImages();
@@ -460,10 +544,13 @@ function setupEventListeners() {
         updateStats();
     });
     document.getElementById('clearLikesBtn').addEventListener('click', () => {
-        if (confirm('Clear all likes?')) {
+        if (confirm('Clear all likes and dislikes?')) {
             likedPosts.clear();
+            dislikedPosts.clear();
             saveLikedPosts();
+            saveDislikedPosts();
             updateLikedCount();
+            updateDislikedCount();
             curatedTags = [];
             saveCuratedTags();
             renderCuratedTags();
@@ -473,6 +560,7 @@ function setupEventListeners() {
         const data = {
             tags: activeTags,
             likes: Array.from(likedPosts),
+            dislikes: Array.from(dislikedPosts),
             curatedTags: curatedTags
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -491,6 +579,10 @@ function setupEventListeners() {
     });
     document.getElementById('curateFromLikesToggle').addEventListener('change', (e) => {
         settings.curateFromLikes = e.target.checked;
+        saveSettings();
+    });
+    document.getElementById('particlesToggle').addEventListener('change', (e) => {
+        settings.particles = e.target.checked;
         saveSettings();
     });
 
@@ -535,6 +627,8 @@ function setupEventListeners() {
             prevImage();
         } else if (e.key === 'l' || e.key === 'L') {
             toggleLike();
+        } else if (e.key === 'd' || e.key === 'D') {
+            toggleDislike();
         }
     });
 }

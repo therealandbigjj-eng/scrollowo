@@ -95,6 +95,9 @@
             overflow: hidden;
             position: relative;
             background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .image-container {
@@ -134,9 +137,18 @@
             animation: slideOutDown 0.3s ease-in forwards;
         }
 
+        .image-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
         .image-container img {
-            max-width: 100%;
-            max-height: 100%;
+            max-width: 95%;
+            max-height: 95%;
             object-fit: contain;
         }
 
@@ -362,12 +374,19 @@
             border-color: #0284c7;
         }
 
-        .like-btn {
+        .button-group {
             position: absolute;
             bottom: 80px;
             right: 20px;
-            width: 56px;
-            height: 56px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .action-btn {
+            width: 50px;
+            height: 50px;
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid #fff;
             border-radius: 50%;
@@ -375,23 +394,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
+            font-size: 24px;
             transition: all 0.2s;
-            z-index: 10;
         }
 
-        .like-btn:hover {
+        .action-btn:hover {
             background: rgba(255, 255, 255, 0.2);
             transform: scale(1.1);
         }
 
-        .like-btn:active {
+        .action-btn:active {
             transform: scale(0.95);
         }
 
-        .like-btn.liked {
+        .action-btn.liked {
             background: #ef4444;
             border-color: #ef4444;
+        }
+
+        .action-btn.disliked {
+            background: #8b5cf6;
+            border-color: #8b5cf6;
         }
 
         .info-text {
@@ -535,6 +558,25 @@
             border-top: 1px solid #333;
         }
 
+        /* Particle effects */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            font-size: 24px;
+            animation: float-up 1.5s ease-out forwards;
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0) translateX(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) translateX(var(--tx, 0)) scale(0.5);
+            }
+        }
+
         @media (min-width: 768px) {
             .sidebar {
                 transform: translateX(0);
@@ -565,11 +607,15 @@
                 font-size: 18px;
             }
 
-            .like-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 22px;
+            .button-group {
+                right: 10px;
                 bottom: 60px;
+            }
+
+            .action-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
             }
         }
     </style>
@@ -613,7 +659,8 @@
 
                     <div class="sidebar-section">
                         <div class="liked-count">
-                            <span id="likedCount">0</span> liked images
+                            <span id="likedCount">0</span> liked<br>
+                            <span id="dislikedCount">0</span> disliked
                         </div>
                     </div>
 
@@ -656,6 +703,12 @@
                                 Curate from likes
                             </label>
                         </div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                                <input type="checkbox" id="particlesToggle" checked>
+                                Particle effects
+                            </label>
+                        </div>
                         <button class="control-btn" id="clearLikesBtn" style="margin-top: 12px;">Clear Likes</button>
                         <button class="control-btn" id="exportDataBtn" style="margin-top: 8px;">Export Data</button>
                     </div>
@@ -666,7 +719,10 @@
 
             <div class="feed">
                 <div id="imageStack"></div>
-                <button class="like-btn" id="likeBtn" title="Like this image">♡</button>
+                <div class="button-group">
+                    <button class="action-btn" id="dislikeBtn" title="Dislike this image">👎</button>
+                    <button class="action-btn" id="likeBtn" title="Like this image">♡</button>
+                </div>
                 <div class="info-text">
                     <div id="imageCount">0 / 0</div>
                 </div>
