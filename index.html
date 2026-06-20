@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>scrollowo - e621 Scroller</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            position: relative;
+        }
+
+        .feed {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+
+        .image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: #111;
+            scroll-snap-align: start;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-size: 24px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #333;
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #333;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .sidebar-section h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .tag-input {
+            width: 100%;
+            padding: 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .tag-input::placeholder {
+            color: #666;
+        }
+
+        .tag-input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            background: #333;
+        }
+
+        .add-tag-btn {
+            width: 100%;
+            padding: 10px;
+            background: #0ea5e9;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .add-tag-btn:hover {
+            background: #0284c7;
+        }
+
+        .add-tag-btn:active {
+            transform: scale(0.98);
+        }
+
+        .active-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            background: #0ea5e9;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            gap: 6px;
+            animation: slideIn 0.2s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .tag-remove {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            line-height: 1;
+        }
+
+        .tag-remove:hover {
+            opacity: 0.8;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-btn {
+            padding: 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .control-btn:hover {
+            background: #333;
+            border-color: #555;
+        }
+
+        .control-btn:active {
+            transform: scale(0.98);
+        }
+
+        .control-btn.primary {
+            background: #0ea5e9;
+            border-color: #0ea5e9;
+        }
+
+        .control-btn.primary:hover {
+            background: #0284c7;
+            border-color: #0284c7;
+        }
+
+        .like-btn {
+            position: absolute;
+            bottom: 80px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .like-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .like-btn:active {
+            transform: scale(0.95);
+        }
+
+        .like-btn.liked {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .info-text {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            font-size: 12px;
+            color: #999;
+            text-align: right;
+            z-index: 10;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 4px;
+        }
+
+        .liked-count {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                display: none;
+            }
+
+            .like-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+                bottom: 60px;
+                right: 20px;
+            }
+
+            .info-text {
+                right: 20px;
+            }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .stat {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .stat .value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0ea5e9;
+        }
+
+        .stat .label {
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .scrollbar-hint {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(-50%) translateX(0); }
+            50% { transform: translateY(-50%) translateX(5px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="feed">
+            <div id="imageStack"></div>
+            <button class="like-btn" id="likeBtn" title="Like this image">♡</button>
+            <div class="scrollbar-hint" id="scrollHint">⟳</div>
+            <div class="info-text">
+                <div id="imageCount">0 / 0</div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-header">scrollowo</div>
+
+            <div class="sidebar-section">
+                <h3>Search Tags</h3>
+                <input type="text" class="tag-input" id="tagInput" placeholder="e.g., cat, dog, wolf">
+                <button class="add-tag-btn" id="addTagBtn">Add Tag</button>
+                <div id="errorMessage"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Active Tags</h3>
+                <div class="active-tags" id="activeTags"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Actions</h3>
+                <div class="controls">
+                    <button class="control-btn primary" id="refreshBtn">Refresh Feed</button>
+                    <button class="control-btn" id="clearTagsBtn">Clear All Tags</button>
+                </div>
+                <div class="liked-count">
+                    <span id="likedCount">0</span> liked images
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="stats">
+                    <div class="stat">
+                        <div class="value" id="totalImages">0</div>
+                        <div class="label">Total Loaded</div>
+                    </div>
+                    <div class="stat">
+                        <div class="value" id="currentIndex">0</div>
+                        <div class="label">Position</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://e621.net/posts.json';
+        const BATCH_SIZE = 20;
+        const LIKE_STORAGE_KEY = 'e621_liked_posts';
+
+        let images = [];
+        let currentIndex = 0;
+        let activeTags = [];
+        let likedPosts = new Set();
+        let isLoading = false;
+        let hasMorePages = true;
+        let pageNumber = 1;
+
+        // Initialize liked posts from storage
+        function initLikedPosts() {
+            const stored = localStorage.getItem(LIKE_STORAGE_KEY);
+            if (stored) {
+                likedPosts = new Set(JSON.parse(stored));
+            }
+            updateLikedCount();
+        }
+
+        // Save liked posts to storage
+        function saveLikedPosts() {
+            localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(Array.from(likedPosts)));
+        }
+
+        // Fetch images from e621
+        async function fetchImages() {
+            if (isLoading || !hasMorePages) return;
+
+            isLoading = true;
+            showLoading();
+
+            try {
+                const tags = activeTags.join(' ');
+                const params = new URLSearchParams({
+                    tags: tags,
+                    limit: BATCH_SIZE,
+                    page: pageNumber,
+                });
+
+                const response = await fetch(`${API_BASE}?${params}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+                
+                if (!data.posts || data.posts.length === 0) {
+                    hasMorePages = false;
+                    if (images.length === 0) {
+                        showMessage('No images found. Try different tags.');
+                    }
+                    isLoading = false;
+                    return;
+                }
+
+                // Filter posts to only include those with file data
+                const validPosts = data.posts.filter(post => post.file && post.file.url);
+                images.push(...validPosts);
+
+                pageNumber++;
+                if (validPosts.length < BATCH_SIZE) {
+                    hasMorePages = false;
+                }
+
+                updateStats();
+                renderImage();
+                hideLoading();
+            } catch (error) {
+                console.error('Error fetching images:', error);
+                showMessage(`Error: ${error.message}`);
+                hideLoading();
+            }
+
+            isLoading = false;
+        }
+
+        // Show loading spinner
+        function showLoading() {
+            const stack = document.getElementById('imageStack');
+            if (stack.children.length === 0) {
+                stack.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            }
+        }
+
+        // Hide loading spinner
+        function hideLoading() {
+            const stack = document.getElementById('imageStack');
+            if (stack.querySelector('.loading')) {
+                stack.innerHTML = '';
+            }
+        }
+
+        // Show message
+        function showMessage(msg) {
+            const stack = document.getElementById('imageStack');
+            stack.innerHTML = `<div class="loading" style="font-size: 18px; color: #ccc;">${msg}</div>`;
+        }
+
+        // Render current image
+        function renderImage() {
+            const stack = document.getElementById('imageStack');
+
+            if (images.length === 0) {
+                showMessage('No images loaded. Add tags to get started!');
+                return;
+            }
+
+            if (currentIndex >= images.length) {
+                // Load more images if we're near the end
+                if (currentIndex > images.length - 5 && hasMorePages) {
+                    fetchImages();
+                }
+                return;
+            }
+
+            const post = images[currentIndex];
+            const container = document.createElement('div');
+            container.className = 'image-container';
+
+            const img = document.createElement('img');
+            img.src = post.file.url;
+            img.alt = 'e621 image';
+            img.onerror = () => {
+                // Skip to next image if this one fails
+                nextImage();
+            };
+
+            container.appendChild(img);
+            stack.innerHTML = '';
+            stack.appendChild(container);
+
+            updateLikeButton();
+            updateStats();
+        }
+
+        // Next image
+        function nextImage() {
+            if (currentIndex < images.length - 1) {
+                currentIndex++;
+                renderImage();
+                // Preload next batch if needed
+                if (currentIndex > images.length - 5 && hasMorePages && !isLoading) {
+                    fetchImages();
+                }
+            } else if (hasMorePages && !isLoading) {
+                fetchImages();
+            }
+        }
+
+        // Previous image
+        function prevImage() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderImage();
+            }
+        }
+
+        // Update like button state
+        function updateLikeButton() {
+            const likeBtn = document.getElementById('likeBtn');
+            const isLiked = likedPosts.has(images[currentIndex].id);
+            if (isLiked) {
+                likeBtn.classList.add('liked');
+                likeBtn.textContent = '❤';
+            } else {
+                likeBtn.classList.remove('liked');
+                likeBtn.textContent = '♡';
+            }
+        }
+
+        // Toggle like
+        function toggleLike() {
+            if (images.length === 0) return;
+            const postId = images[currentIndex].id;
+            if (likedPosts.has(postId)) {
+                likedPosts.delete(postId);
+            } else {
+                likedPosts.add(postId);
+                // Add similar tags when liking
+                const post = images[currentIndex];
+                if (post.tags && post.tags.general) {
+                    // This helps the algorithm show similar content
+                }
+            }
+            saveLikedPosts();
+            updateLikeButton();
+            updateLikedCount();
+        }
+
+        // Update liked count
+        function updateLikedCount() {
+            document.getElementById('likedCount').textContent = likedPosts.size;
+        }
+
+        // Update stats
+        function updateStats() {
+            document.getElementById('imageCount').textContent = `${currentIndex + 1} / ${images.length}`;
+            document.getElementById('totalImages').textContent = images.length;
+            document.getElementById('currentIndex').textContent = currentIndex + 1;
+        }
+
+        // Add tag
+        function addTag() {
+            const input = document.getElementById('tagInput');
+            const tag = input.value.trim().toLowerCase();
+
+            if (!tag) {
+                showError('Please enter a tag');
+                return;
+            }
+
+            if (activeTags.includes(tag)) {
+                showError('Tag already added');
+                return;
+            }
+
+            if (activeTags.length >= 10) {
+                showError('Maximum 10 tags allowed');
+                return;
+            }
+
+            activeTags.push(tag);
+            input.value = '';
+            clearError();
+            renderTags();
+            resetFeed();
+            fetchImages();
+        }
+
+        // Remove tag
+        function removeTag(tag) {
+            activeTags = activeTags.filter(t => t !== tag);
+            renderTags();
+            resetFeed();
+            if (activeTags.length > 0) {
+                fetchImages();
+            }
+        }
+
+        // Render tags
+        function renderTags() {
+            const container = document.getElementById('activeTags');
+            container.innerHTML = activeTags.map(tag => `
+                <div class="tag">
+                    ${tag}
+                    <button class="tag-remove" onclick="window.app.removeTag('${tag}')">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Reset feed
+        function resetFeed() {
+            images = [];
+            currentIndex = 0;
+            pageNumber = 1;
+            hasMorePages = true;
+            updateStats();
+        }
+
+        // Show error
+        function showError(msg) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = msg;
+            errorEl.className = 'error-message';
+            setTimeout(() => clearError(), 3000);
+        }
+
+        // Clear error
+        function clearError() {
+            document.getElementById('errorMessage').textContent = '';
+            document.getElementById('errorMessage').className = '';
+        }
+
+        // Event listeners
+        document.getElementById('addTagBtn').addEventListener('click', addTag);
+        document.getElementById('tagInput').addEventListener('keypress', e => {
+            if (e.key === 'Enter') addTag();
+        });
+
+        document.getElementById('likeBtn').addEventListener('click', () => {
+            toggleLike();
+            // Add some feedback
+            const btn = document.getElementById('likeBtn');
+            btn.style.transform = 'scale(1.3)';
+            setTimeout(() => {
+                btn.style.transform = '';
+            }, 100);
+        });
+
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            resetFeed();
+            fetchImages();
+        });
+
+        document.getElementById('clearTagsBtn').addEventListener('click', () => {
+            activeTags = [];
+            renderTags();
+            resetFeed();
+            updateStats();
+        });
+
+        // Scroll to next/prev
+        document.addEventListener('wheel', e => {
+            e.preventDefault();
+            if (e.deltaY > 0) {
+                nextImage();
+            } else {
+                prevImage();
+            }
+        }, { passive: false });
+
+        // Touch swipe support
+        let touchStartY = 0;
+        document.addEventListener('touchstart', e => {
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', e => {
+            const touchEndY = e.changedTouches[0].clientY;
+            const diff = touchStartY - touchEndY;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    nextImage();
+                } else {
+                    prevImage();
+                }
+            }
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                nextImage();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                prevImage();
+            } else if (e.key === 'l' || e.key === 'L') {
+                toggleLike();
+            }
+        });
+
+        // Expose app globally for tag removal
+        window.app = {
+            removeTag,
+        };
+
+        // Initialize
+        initLikedPosts();
+        updateStats();
+    </script>
+</body>
+</html>
