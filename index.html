@@ -64,6 +64,19 @@
             text-align: center;
         }
 
+        .auto-scroll-indicator {
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         .header-btn {
             background: rgba(255, 255, 255, 0.2);
             border: none;
@@ -146,10 +159,23 @@
             position: relative;
         }
 
-        .image-container img {
+        .image-container img,
+        .image-container video {
             max-width: 95%;
             max-height: 95%;
             object-fit: contain;
+        }
+
+        .media-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(14, 165, 233, 0.9);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 5;
         }
 
         .image-info {
@@ -173,6 +199,13 @@
             margin-bottom: 8px;
         }
 
+        .image-artist {
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
         .image-tags {
             display: flex;
             flex-wrap: wrap;
@@ -193,6 +226,12 @@
             border-radius: 12px;
             font-size: 11px;
             white-space: nowrap;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .image-tag:hover {
+            background: rgba(14, 165, 233, 0.9);
         }
 
         .loading {
@@ -372,6 +411,66 @@
         .control-btn.primary:hover {
             background: #0284c7;
             border-color: #0284c7;
+        }
+
+        .setting-item {
+            background: #2a2a2a;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            border: 1px solid #333;
+        }
+
+        .setting-item label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .setting-item label:last-child {
+            margin-bottom: 0;
+        }
+
+        .setting-item input[type="checkbox"],
+        .setting-item input[type="range"],
+        .setting-item input[type="number"],
+        .setting-item select {
+            cursor: pointer;
+        }
+
+        .setting-item input[type="range"] {
+            width: 100%;
+        }
+
+        .setting-item input[type="number"] {
+            width: 60px;
+            padding: 4px 8px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .setting-item select {
+            padding: 6px 8px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .range-value {
+            display: inline-block;
+            background: #0ea5e9;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 8px;
         }
 
         .button-group {
@@ -627,6 +726,7 @@
         <div class="header">
             <button class="header-btn" id="menuBtn" title="Menu">☰</button>
             <div class="header-title">scrollowo</div>
+            <div id="autoScrollStatus" class="auto-scroll-indicator" style="display: none;">▶ Auto</div>
             <button class="header-btn" id="searchBtn" title="Add tags">🔍</button>
         </div>
 
@@ -686,31 +786,90 @@
                             Generated from your likes
                         </div>
                     </div>
+
+                    <div class="sidebar-section">
+                        <h3>Top Artists</h3>
+                        <div class="active-tags" id="topArtists"></div>
+                        <div style="margin-top: 12px; font-size: 12px; color: #666;">
+                            Your favorite creators
+                        </div>
+                    </div>
                 </div>
 
                 <div id="settings-tab" class="tab-content" style="display: none;">
                     <div class="sidebar-section">
-                        <h3>Settings</h3>
-                        <div style="margin-bottom: 12px;">
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <h3>Playback</h3>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="autoPlayToggle">
+                                Auto-play videos
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="autoScrollToggle">
+                                Auto-scroll
+                            </label>
+                            <label>
+                                Interval (s): <input type="number" id="autoScrollInterval" min="1" max="60" value="5">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3>Content</h3>
+                        <div class="setting-item">
+                            <label>
                                 <input type="checkbox" id="autoSuggestToggle" checked>
                                 Auto-suggest tags
                             </label>
                         </div>
-                        <div style="margin-bottom: 12px;">
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <div class="setting-item">
+                            <label>
                                 <input type="checkbox" id="curateFromLikesToggle" checked>
                                 Curate from likes
                             </label>
                         </div>
-                        <div style="margin-bottom: 12px;">
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="trackArtistsToggle" checked>
+                                Track favorite artists
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3>Fun & Effects</h3>
+                        <div class="setting-item">
+                            <label>
                                 <input type="checkbox" id="particlesToggle" checked>
                                 Particle effects
                             </label>
                         </div>
-                        <button class="control-btn" id="clearLikesBtn" style="margin-top: 12px;">Clear Likes</button>
-                        <button class="control-btn" id="exportDataBtn" style="margin-top: 8px;">Export Data</button>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="rainbowModeToggle">
+                                🌈 Rainbow mode
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                Theme:<br>
+                                <select id="themeSelect" style="margin-top: 6px;">
+                                    <option value="dark">Dark (Default)</option>
+                                    <option value="darkpurple">Dark Purple</option>
+                                    <option value="midnight">Midnight Blue</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3>Data</h3>
+                        <div class="controls">
+                            <button class="control-btn" id="clearLikesBtn">Clear Likes</button>
+                            <button class="control-btn" id="exportDataBtn">Export Data</button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -4,21 +4,30 @@ const LIKE_STORAGE_KEY = 'e621_liked_posts';
 const DISLIKE_STORAGE_KEY = 'e621_disliked_posts';
 const TAGS_STORAGE_KEY = 'e621_active_tags';
 const CURATED_TAGS_STORAGE_KEY = 'e621_curated_tags';
+const TOP_ARTISTS_STORAGE_KEY = 'e621_top_artists';
 const SETTINGS_STORAGE_KEY = 'e621_settings';
 
 let images = [];
 let currentIndex = 0;
 let activeTags = [];
 let curatedTags = [];
+let topArtists = {};
 let likedPosts = new Set();
 let dislikedPosts = new Set();
 let isLoading = false;
 let hasMorePages = true;
 let pageNumber = 1;
+let autoScrollTimer = null;
 let settings = {
     autoSuggest: true,
     curateFromLikes: true,
-    particles: true
+    particles: true,
+    autoPlay: true,
+    autoScroll: false,
+    autoScrollInterval: 5,
+    trackArtists: true,
+    rainbowMode: false,
+    theme: 'dark'
 };
 
 const popularTags = [
@@ -27,15 +36,17 @@ const popularTags = [
     'character', 'oc', 'original character', 'nsfw', 'safe', 'questionable'
 ];
 
-const particles = ['✨', '💫', '⭐', '✨', '💥', '🌟'];
+const particles = ['✨', '💬', '⭐', '💥', '🌟'];
 
 // Initialize
 function init() {
     loadSettings();
+    applyTheme();
     initLikedPosts();
     initDislikedPosts();
     loadActiveTags();
     loadCuratedTags();
+    loadTopArtists();
     setupEventListeners();
     updateStats();
     renderTags();
@@ -43,6 +54,30 @@ function init() {
     updateSettingsUI();
     renderSuggestedTags();
     fetchImages();
+}
+
+// Theme Management
+function applyTheme() {
+    const root = document.documentElement;
+    switch(settings.theme) {
+        case 'darkpurple':
+            root.style.setProperty('--primary-color', '#a855f7');
+            break;
+        case 'midnight':
+            root.style.setProperty('--primary-color', '#3b82f6');
+            break;
+        default:
+            root.style.setProperty('--primary-color', '#0ea5e9');
+    }
+    
+    if (settings.rainbowMode) {
+        document.body.style.background = 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
+        document.body.style.backgroundSize = '200% 200%';
+        document.body.style.animation = 'gradientShift 8s ease infinite';
+    } else {
+        document.body.style.background = '#000';
+        document.body.style.animation = 'none';
+    }
 }
 
 // Settings Management
@@ -55,12 +90,19 @@ function loadSettings() {
 
 function saveSettings() {
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    applyTheme();
 }
 
 function updateSettingsUI() {
     document.getElementById('autoSuggestToggle').checked = settings.autoSuggest;
     document.getElementById('curateFromLikesToggle').checked = settings.curateFromLikes;
     document.getElementById('particlesToggle').checked = settings.particles;
+    document.getElementById('autoPlayToggle').checked = settings.autoPlay;
+    document.getElementById('autoScrollToggle').checked = settings.autoScroll;
+    document.getElementById('autoScrollInterval').value = settings.autoScrollInterval;
+    document.getElementById('trackArtistsToggle').checked = settings.trackArtists;
+    document.getElementById('rainbowModeToggle').checked = settings.rainbowMode;
+    document.getElementById('themeSelect').value = settings.theme;
 }
 
 // Liked Posts Management
@@ -89,6 +131,30 @@ function saveDislikedPosts() {
     localStorage.setItem(DISLIKE_STORAGE_KEY, JSON.stringify(Array.from(dislikedPosts)));
 }
 
+// Top Artists Management
+function loadTopArtists() {
+    const stored = localStorage.getItem(TOP_ARTISTS_STORAGE_KEY);
+    if (stored) {
+        topArtists = JSON.parse(stored);
+    }
+}
+
+function saveTopArtists() {
+    localStorage.setItem(TOP_ARTISTS_STORAGE_KEY, JSON.stringify(topArtists));
+}
+
+function updateArtistStats(post) {
+    if (!settings.trackArtists) return;
+    
+    const artistTags = post.tags?.artist || [];
+    artistTags.forEach(artist => {
+        topArtists[artist] = (topArtists[artist] || 0) + 1;
+    });
+    
+    saveTopArtists();
+    renderCuratedTags();
+}
+
 // Tags Management
 function loadActiveTags() {
     const stored = localStorage.getItem(TAGS_STORAGE_KEY);
@@ -112,19 +178,23 @@ function saveCuratedTags() {
     localStorage.setItem(CURATED_TAGS_STORAGE_KEY, JSON.stringify(curatedTags));
 }
 
-// Particle effects
-function createParticle(x, y, emoji) {
-    if (!settings.particles) return;
+// Auto-scroll
+function startAutoScroll() {
+    if (autoScrollTimer) clearInterval(autoScrollTimer);
+    if (!settings.autoScroll) return;
     
-    const particle = document.createElement('div');
-    particle.className = 'particle';
-    particle.textContent = emoji;
-    particle.style.left = x + 'px';
-    particle.style.top = y + 'px';
-    particle.style.setProperty('--tx', (Math.random() - 0.5) * 100 + 'px');
-    
-    document.body.appendChild(particle);
-    setTimeout(() => particle.remove(), 1500);
+    document.getElementById('autoScrollStatus').style.display = 'block';
+    autoScrollTimer = setInterval(() => {
+        nextImage();
+    }, settings.autoScrollInterval * 1000);
+}
+
+function stopAutoScroll() {
+    if (autoScrollTimer) {
+        clearInterval(autoScrollTimer);
+        autoScrollTimer = null;
+    }
+    document.getElementById('autoScrollStatus').style.display = 'none';
 }
 
 // Curate tags from liked posts
@@ -158,6 +228,21 @@ function updateCuratedTags() {
 
     saveCuratedTags();
     renderCuratedTags();
+}
+
+// Particle effects
+function createParticle(x, y, emoji) {
+    if (!settings.particles) return;
+    
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.textContent = emoji;
+    particle.style.left = x + 'px';
+    particle.style.top = y + 'px';
+    particle.style.setProperty('--tx', (Math.random() - 0.5) * 100 + 'px');
+    
+    document.body.appendChild(particle);
+    setTimeout(() => particle.remove(), 1500);
 }
 
 // Progress bar
@@ -276,10 +361,30 @@ function renderImage() {
     const wrapper = document.createElement('div');
     wrapper.className = 'image-wrapper';
 
-    const img = document.createElement('img');
-    img.src = post.file.url;
-    img.alt = 'e621 image';
-    img.onerror = () => {
+    // Check if it's a video or image
+    const isVideo = post.file.ext === 'webm' || post.file.ext === 'mp4' || post.file.ext === 'gif';
+    let media;
+
+    if (isVideo) {
+        media = document.createElement('video');
+        media.src = post.file.url;
+        media.autoplay = settings.autoPlay;
+        media.loop = true;
+        media.controls = true;
+        media.volume = 0.5;
+        
+        // Badge
+        const badge = document.createElement('div');
+        badge.className = 'media-badge';
+        badge.textContent = '🎬 Video';
+        wrapper.appendChild(badge);
+    } else {
+        media = document.createElement('img');
+        media.src = post.file.url;
+        media.alt = 'e621 image';
+    }
+
+    media.onerror = () => {
         nextImage();
     };
 
@@ -290,6 +395,16 @@ function renderImage() {
     desc.className = 'image-description';
     desc.textContent = `Post #${post.id}`;
 
+    // Artist info
+    const artistTags = post.tags?.artist || [];
+    if (artistTags.length > 0) {
+        const artistDiv = document.createElement('div');
+        artistDiv.className = 'image-artist';
+        artistDiv.textContent = `by ${artistTags.join(', ')}`;
+        info.appendChild(artistDiv);
+    }
+    info.appendChild(desc);
+
     const tags = document.createElement('div');
     tags.className = 'image-tags';
     const allTags = [
@@ -297,16 +412,16 @@ function renderImage() {
         ...(post.tags.character || []),
         ...(post.tags.species || [])
     ];
-    tags.innerHTML = allTags.slice(0, 20).map(tag => `<div class="image-tag">${tag}</div>`).join('');
+    tags.innerHTML = allTags.slice(0, 20).map(tag => `<div class="image-tag" onclick="window.app.addTag('${tag}')">${tag}</div>`).join('');
 
-    info.appendChild(desc);
     info.appendChild(tags);
     
-    info.addEventListener('click', () => {
+    info.addEventListener('click', (e) => {
+        if (e.target.classList.contains('image-tag')) return;
         info.classList.toggle('expanded');
     });
 
-    wrapper.appendChild(img);
+    wrapper.appendChild(media);
     container.appendChild(wrapper);
     container.appendChild(info);
     stack.innerHTML = '';
@@ -314,6 +429,7 @@ function renderImage() {
 
     updateLikeButton();
     updateStats();
+    updateArtistStats(post);
 
     // Prefetch next image
     if (currentIndex > images.length - 3 && hasMorePages && !isLoading) {
@@ -393,7 +509,7 @@ function toggleDislike() {
     } else {
         dislikedPosts.add(postId);
         likedPosts.delete(postId);
-        createParticle(dislikeBtn.offsetLeft + 25, dislikeBtn.offsetTop + 25, '💫');
+        createParticle(dislikeBtn.offsetLeft + 25, dislikeBtn.offsetTop + 25, '💬');
     }
     saveDislikedPosts();
     updateLikeButton();
@@ -457,14 +573,32 @@ function renderCuratedTags() {
     const container = document.getElementById('curatedTags');
     if (curatedTags.length === 0) {
         container.innerHTML = '<div style="font-size: 12px; color: #666;">Like more images to see curated tags</div>';
-        return;
+    } else {
+        container.innerHTML = curatedTags.map(tag => `
+            <div class="tag" style="cursor: pointer;" onclick="window.app.addTagFromCurated('${tag}')">
+                ${tag}
+                <span style="margin-left: 4px;">+</span>
+            </div>
+        `).join('');
     }
-    container.innerHTML = curatedTags.map(tag => `
-        <div class="tag" style="cursor: pointer;" onclick="window.app.addTagFromCurated('${tag}')">
-            ${tag}
-            <span style="margin-left: 4px;">+</span>
-        </div>
-    `).join('');
+
+    // Render top artists
+    const artistContainer = document.getElementById('topArtists');
+    const sortedArtists = Object.entries(topArtists)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([artist]) => artist);
+    
+    if (sortedArtists.length === 0) {
+        artistContainer.innerHTML = '<div style="font-size: 12px; color: #666;">Like images to discover artists</div>';
+    } else {
+        artistContainer.innerHTML = sortedArtists.map(artist => `
+            <div class="tag" style="cursor: pointer;" onclick="window.app.addTag('${artist}')">
+                ${artist}
+                <span style="margin-left: 4px;">🎨</span>
+            </div>
+        `).join('');
+    }
 }
 
 function renderSuggestedTags() {
@@ -561,7 +695,8 @@ function setupEventListeners() {
             tags: activeTags,
             likes: Array.from(likedPosts),
             dislikes: Array.from(dislikedPosts),
-            curatedTags: curatedTags
+            curatedTags: curatedTags,
+            topArtists: topArtists
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -583,6 +718,38 @@ function setupEventListeners() {
     });
     document.getElementById('particlesToggle').addEventListener('change', (e) => {
         settings.particles = e.target.checked;
+        saveSettings();
+    });
+    document.getElementById('autoPlayToggle').addEventListener('change', (e) => {
+        settings.autoPlay = e.target.checked;
+        saveSettings();
+    });
+    document.getElementById('autoScrollToggle').addEventListener('change', (e) => {
+        settings.autoScroll = e.target.checked;
+        saveSettings();
+        if (e.target.checked) {
+            startAutoScroll();
+        } else {
+            stopAutoScroll();
+        }
+    });
+    document.getElementById('autoScrollInterval').addEventListener('change', (e) => {
+        settings.autoScrollInterval = parseInt(e.target.value);
+        saveSettings();
+        if (settings.autoScroll) {
+            startAutoScroll();
+        }
+    });
+    document.getElementById('trackArtistsToggle').addEventListener('change', (e) => {
+        settings.trackArtists = e.target.checked;
+        saveSettings();
+    });
+    document.getElementById('rainbowModeToggle').addEventListener('change', (e) => {
+        settings.rainbowMode = e.target.checked;
+        saveSettings();
+    });
+    document.getElementById('themeSelect').addEventListener('change', (e) => {
+        settings.theme = e.target.value;
         saveSettings();
     });
 
@@ -644,3 +811,4 @@ window.app = {
 
 // Initialize
 init();
+startAutoScroll();
