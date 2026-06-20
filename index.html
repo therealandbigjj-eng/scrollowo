@@ -22,7 +22,51 @@
             width: 100vw;
             height: 100vh;
             display: flex;
+            flex-direction: column;
             position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
         }
 
         .feed {
@@ -40,13 +84,85 @@
             justify-content: center;
             position: relative;
             background: #111;
-            scroll-snap-align: start;
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideOutDown {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+        }
+
+        .image-container.exiting {
+            animation: slideOutDown 0.3s ease-in forwards;
         }
 
         .image-container img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
+        }
+
+        .image-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .image-info:hover {
+            padding: 30px 20px 20px;
+        }
+
+        .image-description {
+            font-size: 12px;
+            color: #ccc;
+            margin-bottom: 8px;
+            max-height: 2em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .image-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s;
+        }
+
+        .image-info.expanded .image-tags {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .image-tag {
+            background: rgba(14, 165, 233, 0.7);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            white-space: nowrap;
         }
 
         .loading {
@@ -73,23 +189,62 @@
         }
 
         .sidebar {
-            width: 300px;
+            width: 280px;
             background: #1a1a1a;
             display: flex;
             flex-direction: column;
             border-left: 1px solid #333;
             overflow-y: auto;
+            transform: translateX(-100%);
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            z-index: 200;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 150;
+        }
+
+        .sidebar-overlay.visible {
+            display: block;
         }
 
         .sidebar-header {
             padding: 20px;
             border-bottom: 1px solid #333;
-            font-size: 24px;
+            font-size: 18px;
             font-weight: 700;
-            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .sidebar-section {
@@ -98,53 +253,11 @@
         }
 
         .sidebar-section h3 {
-            font-size: 14px;
+            font-size: 12px;
             text-transform: uppercase;
             color: #999;
             margin-bottom: 12px;
             font-weight: 600;
-        }
-
-        .tag-input {
-            width: 100%;
-            padding: 10px;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 4px;
-            color: #fff;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-
-        .tag-input::placeholder {
-            color: #666;
-        }
-
-        .tag-input:focus {
-            outline: none;
-            border-color: #0ea5e9;
-            background: #333;
-        }
-
-        .add-tag-btn {
-            width: 100%;
-            padding: 10px;
-            background: #0ea5e9;
-            border: none;
-            border-radius: 4px;
-            color: #fff;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-
-        .add-tag-btn:hover {
-            background: #0284c7;
-        }
-
-        .add-tag-btn:active {
-            transform: scale(0.98);
         }
 
         .active-tags {
@@ -232,9 +345,9 @@
         .like-btn {
             position: absolute;
             bottom: 80px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
             background: rgba(255, 255, 255, 0.1);
             border: 2px solid #fff;
             border-radius: 50%;
@@ -242,7 +355,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 26px;
             transition: all 0.2s;
             z-index: 10;
         }
@@ -264,10 +377,9 @@
         .info-text {
             position: absolute;
             bottom: 20px;
-            right: 30px;
+            left: 20px;
             font-size: 12px;
             color: #999;
-            text-align: right;
             z-index: 10;
         }
 
@@ -286,25 +398,6 @@
             margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid #333;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 0;
-                display: none;
-            }
-
-            .like-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 24px;
-                bottom: 60px;
-                right: 20px;
-            }
-
-            .info-text {
-                right: 20px;
-            }
         }
 
         .stats {
@@ -339,7 +432,7 @@
             top: 50%;
             transform: translateY(-50%);
             font-size: 24px;
-            color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.2);
             pointer-events: none;
             animation: float 3s ease-in-out infinite;
         }
@@ -348,57 +441,318 @@
             0%, 100% { transform: translateY(-50%) translateX(0); }
             50% { transform: translateY(-50%) translateX(5px); }
         }
+
+        .search-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 300;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .search-modal.active {
+            display: flex;
+        }
+
+        .search-modal-header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .search-input::placeholder {
+            color: #666;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            background: #333;
+        }
+
+        .search-close {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .suggested-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .suggested-tag {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggested-tag:hover {
+            background: #333;
+            border-color: #0ea5e9;
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 300;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .settings-modal.active {
+            display: flex;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .setting-item {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #333;
+        }
+
+        .setting-item label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .setting-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #999;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #0ea5e9;
+            border-color: #0ea5e9;
+            color: #fff;
+        }
+
+        @media (min-width: 768px) {
+            .sidebar {
+                transform: translateX(0);
+                position: relative;
+                width: 300px;
+                z-index: 10;
+            }
+
+            .sidebar-overlay {
+                display: none !important;
+            }
+
+            .header-btn:first-child {
+                display: none;
+            }
+
+            .main-content {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px 12px;
+            }
+
+            .header-title {
+                font-size: 18px;
+            }
+
+            .header-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+
+            .like-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 22px;
+                bottom: 60px;
+            }
+
+            .info-text {
+                font-size: 11px;
+            }
+
+            .image-info {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="feed">
-            <div id="imageStack"></div>
-            <button class="like-btn" id="likeBtn" title="Like this image">♡</button>
-            <div class="scrollbar-hint" id="scrollHint">⟳</div>
-            <div class="info-text">
-                <div id="imageCount">0 / 0</div>
-            </div>
+        <div class="header">
+            <button class="header-btn" id="menuBtn" title="Menu">☰</button>
+            <div class="header-title">scrollowo</div>
+            <button class="header-btn" id="searchBtn" title="Add tags">🔍</button>
         </div>
 
-        <div class="sidebar">
-            <div class="sidebar-header">scrollowo</div>
-
-            <div class="sidebar-section">
-                <h3>Search Tags</h3>
-                <input type="text" class="tag-input" id="tagInput" placeholder="e.g., cat, dog, wolf">
-                <button class="add-tag-btn" id="addTagBtn">Add Tag</button>
-                <div id="errorMessage"></div>
-            </div>
-
-            <div class="sidebar-section">
-                <h3>Active Tags</h3>
-                <div class="active-tags" id="activeTags"></div>
-            </div>
-
-            <div class="sidebar-section">
-                <h3>Actions</h3>
-                <div class="controls">
-                    <button class="control-btn primary" id="refreshBtn">Refresh Feed</button>
-                    <button class="control-btn" id="clearTagsBtn">Clear All Tags</button>
+        <div class="main-content">
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <span>Menu</span>
+                    <button class="close-btn" id="closeSidebarBtn">✕</button>
                 </div>
-                <div class="liked-count">
-                    <span id="likedCount">0</span> liked images
-                </div>
-            </div>
 
-            <div class="sidebar-section">
-                <div class="stats">
-                    <div class="stat">
-                        <div class="value" id="totalImages">0</div>
-                        <div class="label">Total Loaded</div>
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="tags">Tags</button>
+                    <button class="tab-btn" data-tab="curated">Curated</button>
+                    <button class="tab-btn" data-tab="settings">Settings</button>
+                </div>
+
+                <div id="tags-tab" class="tab-content">
+                    <div class="sidebar-section">
+                        <h3>Active Tags</h3>
+                        <div class="active-tags" id="activeTags"></div>
                     </div>
-                    <div class="stat">
-                        <div class="value" id="currentIndex">0</div>
-                        <div class="label">Position</div>
+
+                    <div class="sidebar-section">
+                        <h3>Actions</h3>
+                        <div class="controls">
+                            <button class="control-btn primary" id="refreshBtn">Refresh Feed</button>
+                            <button class="control-btn" id="clearTagsBtn">Clear All Tags</button>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <div class="liked-count">
+                            <span id="likedCount">0</span> liked images
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <div class="stats">
+                            <div class="stat">
+                                <div class="value" id="totalImages">0</div>
+                                <div class="label">Total Loaded</div>
+                            </div>
+                            <div class="stat">
+                                <div class="value" id="currentIndex">0</div>
+                                <div class="label">Position</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="curated-tab" class="tab-content" style="display: none;">
+                    <div class="sidebar-section">
+                        <h3>Curated Tags (From Likes)</h3>
+                        <div class="active-tags" id="curatedTags"></div>
+                        <div style="margin-top: 12px; font-size: 12px; color: #666;">
+                            Tags are auto-generated from your liked images. Like more images to improve curation.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="settings-tab" class="tab-content" style="display: none;">
+                    <div class="sidebar-section">
+                        <h3>Settings</h3>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="autoSuggestToggle" checked> Auto-suggest tags from likes
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="curateFromLikesToggle" checked> Use likes to curate feed
+                            </label>
+                        </div>
+                        <button class="control-btn" id="clearLikesBtn" style="margin-top: 12px;">Clear All Likes</button>
+                        <button class="control-btn" id="exportDataBtn" style="margin-top: 8px;">Export Data</button>
                     </div>
                 </div>
             </div>
+
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+            <div class="feed">
+                <div id="imageStack"></div>
+                <button class="like-btn" id="likeBtn" title="Like this image">♡</button>
+                <div class="scrollbar-hint" id="scrollHint">⟳</div>
+                <div class="info-text">
+                    <div id="imageCount">0 / 0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-modal" id="searchModal">
+        <div class="search-modal-header">
+            <input type="text" class="search-input" id="tagSearchInput" placeholder="Search tags...">
+            <button class="search-close" id="searchCloseBtn">✕</button>
+        </div>
+        <div id="suggestedTagsContainer">
+            <h3 style="margin-bottom: 12px; color: #999; font-size: 12px;">POPULAR TAGS</h3>
+            <div class="suggested-tags" id="suggestedTags"></div>
         </div>
     </div>
 
@@ -406,16 +760,61 @@
         const API_BASE = 'https://e621.net/posts.json';
         const BATCH_SIZE = 20;
         const LIKE_STORAGE_KEY = 'e621_liked_posts';
+        const TAGS_STORAGE_KEY = 'e621_active_tags';
+        const CURATED_TAGS_STORAGE_KEY = 'e621_curated_tags';
+        const SETTINGS_STORAGE_KEY = 'e621_settings';
 
         let images = [];
         let currentIndex = 0;
         let activeTags = [];
+        let curatedTags = [];
         let likedPosts = new Set();
         let isLoading = false;
         let hasMorePages = true;
         let pageNumber = 1;
+        let useCuratedFeed = false;
+        let settings = {
+            autoSuggest: true,
+            curateFromLikes: true
+        };
 
-        // Initialize liked posts from storage
+        const popularTags = [
+            'cat', 'dog', 'wolf', 'fox', 'dragon', 'furry', 'anthro', 'cute',
+            'comic', 'artwork', 'sketch', 'animation', 'digital', 'traditional',
+            'character', 'oc', 'original character', 'nsfw', 'safe', 'questionable'
+        ];
+
+        // Initialize
+        function init() {
+            loadSettings();
+            initLikedPosts();
+            loadActiveTags();
+            loadCuratedTags();
+            setupEventListeners();
+            updateStats();
+            renderTags();
+            renderCuratedTags();
+            updateSettingsUI();
+        }
+
+        // Settings Management
+        function loadSettings() {
+            const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+            if (stored) {
+                settings = JSON.parse(stored);
+            }
+        }
+
+        function saveSettings() {
+            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+        }
+
+        function updateSettingsUI() {
+            document.getElementById('autoSuggestToggle').checked = settings.autoSuggest;
+            document.getElementById('curateFromLikesToggle').checked = settings.curateFromLikes;
+        }
+
+        // Liked Posts Management
         function initLikedPosts() {
             const stored = localStorage.getItem(LIKE_STORAGE_KEY);
             if (stored) {
@@ -424,9 +823,64 @@
             updateLikedCount();
         }
 
-        // Save liked posts to storage
         function saveLikedPosts() {
             localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(Array.from(likedPosts)));
+        }
+
+        // Tags Management
+        function loadActiveTags() {
+            const stored = localStorage.getItem(TAGS_STORAGE_KEY);
+            if (stored) {
+                activeTags = JSON.parse(stored);
+            }
+        }
+
+        function saveActiveTags() {
+            localStorage.setItem(TAGS_STORAGE_KEY, JSON.stringify(activeTags));
+        }
+
+        function loadCuratedTags() {
+            const stored = localStorage.getItem(CURATED_TAGS_STORAGE_KEY);
+            if (stored) {
+                curatedTags = JSON.parse(stored);
+            }
+        }
+
+        function saveCuratedTags() {
+            localStorage.setItem(CURATED_TAGS_STORAGE_KEY, JSON.stringify(curatedTags));
+        }
+
+        // Curate tags from liked posts
+        function updateCuratedTags() {
+            if (!settings.autoSuggest || likedPosts.size === 0) return;
+
+            const tagFrequency = {};
+            let count = 0;
+
+            for (const postId of likedPosts) {
+                const post = images.find(p => p.id === postId);
+                if (post && post.tags) {
+                    const allTags = [
+                        ...(post.tags.general || []),
+                        ...(post.tags.character || []),
+                        ...(post.tags.species || [])
+                    ];
+
+                    allTags.forEach(tag => {
+                        tagFrequency[tag] = (tagFrequency[tag] || 0) + 1;
+                    });
+                }
+                count++;
+                if (count >= 50) break; // Limit to last 50 likes
+            }
+
+            curatedTags = Object.entries(tagFrequency)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 15)
+                .map(([tag]) => tag);
+
+            saveCuratedTags();
+            renderCuratedTags();
         }
 
         // Fetch images from e621
@@ -437,7 +891,18 @@
             showLoading();
 
             try {
-                const tags = activeTags.join(' ');
+                let tagsToUse = [...activeTags];
+
+                // Add curated tags if using curated feed
+                if (useCuratedFeed && settings.curateFromLikes && curatedTags.length > 0) {
+                    // Mix active and curated tags
+                    const randomCurated = curatedTags[Math.floor(Math.random() * curatedTags.length)];
+                    if (!tagsToUse.includes(randomCurated)) {
+                        tagsToUse.push(randomCurated);
+                    }
+                }
+
+                const tags = tagsToUse.join(' ');
                 const params = new URLSearchParams({
                     tags: tags,
                     limit: BATCH_SIZE,
@@ -448,7 +913,7 @@
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                 const data = await response.json();
-                
+
                 if (!data.posts || data.posts.length === 0) {
                     hasMorePages = false;
                     if (images.length === 0) {
@@ -458,7 +923,6 @@
                     return;
                 }
 
-                // Filter posts to only include those with file data
                 const validPosts = data.posts.filter(post => post.file && post.file.url);
                 images.push(...validPosts);
 
@@ -479,7 +943,7 @@
             isLoading = false;
         }
 
-        // Show loading spinner
+        // UI Functions
         function showLoading() {
             const stack = document.getElementById('imageStack');
             if (stack.children.length === 0) {
@@ -487,7 +951,6 @@
             }
         }
 
-        // Hide loading spinner
         function hideLoading() {
             const stack = document.getElementById('imageStack');
             if (stack.querySelector('.loading')) {
@@ -495,13 +958,11 @@
             }
         }
 
-        // Show message
         function showMessage(msg) {
             const stack = document.getElementById('imageStack');
             stack.innerHTML = `<div class="loading" style="font-size: 18px; color: #ccc;">${msg}</div>`;
         }
 
-        // Render current image
         function renderImage() {
             const stack = document.getElementById('imageStack');
 
@@ -511,7 +972,6 @@
             }
 
             if (currentIndex >= images.length) {
-                // Load more images if we're near the end
                 if (currentIndex > images.length - 5 && hasMorePages) {
                     fetchImages();
                 }
@@ -526,11 +986,34 @@
             img.src = post.file.url;
             img.alt = 'e621 image';
             img.onerror = () => {
-                // Skip to next image if this one fails
                 nextImage();
             };
 
+            const info = document.createElement('div');
+            info.className = 'image-info';
+            
+            const desc = document.createElement('div');
+            desc.className = 'image-description';
+            desc.textContent = `Post #${post.id}`;
+
+            const tags = document.createElement('div');
+            tags.className = 'image-tags';
+            const allTags = [
+                ...(post.tags.general || []),
+                ...(post.tags.character || []),
+                ...(post.tags.species || [])
+            ];
+            tags.innerHTML = allTags.slice(0, 20).map(tag => `<div class="image-tag">${tag}</div>`).join('');
+
+            info.appendChild(desc);
+            info.appendChild(tags);
+            
+            info.addEventListener('click', () => {
+                info.classList.toggle('expanded');
+            });
+
             container.appendChild(img);
+            container.appendChild(info);
             stack.innerHTML = '';
             stack.appendChild(container);
 
@@ -538,21 +1021,24 @@
             updateStats();
         }
 
-        // Next image
         function nextImage() {
-            if (currentIndex < images.length - 1) {
-                currentIndex++;
-                renderImage();
-                // Preload next batch if needed
-                if (currentIndex > images.length - 5 && hasMorePages && !isLoading) {
-                    fetchImages();
-                }
-            } else if (hasMorePages && !isLoading) {
-                fetchImages();
+            const current = document.querySelector('.image-container');
+            if (current) {
+                current.classList.add('exiting');
+                setTimeout(() => {
+                    if (currentIndex < images.length - 1) {
+                        currentIndex++;
+                        renderImage();
+                        if (currentIndex > images.length - 5 && hasMorePages && !isLoading) {
+                            fetchImages();
+                        }
+                    } else if (hasMorePages && !isLoading) {
+                        fetchImages();
+                    }
+                }, 300);
             }
         }
 
-        // Previous image
         function prevImage() {
             if (currentIndex > 0) {
                 currentIndex--;
@@ -560,7 +1046,6 @@
             }
         }
 
-        // Update like button state
         function updateLikeButton() {
             const likeBtn = document.getElementById('likeBtn');
             const isLiked = likedPosts.has(images[currentIndex].id);
@@ -573,7 +1058,6 @@
             }
         }
 
-        // Toggle like
         function toggleLike() {
             if (images.length === 0) return;
             const postId = images[currentIndex].id;
@@ -581,60 +1065,45 @@
                 likedPosts.delete(postId);
             } else {
                 likedPosts.add(postId);
-                // Add similar tags when liking
-                const post = images[currentIndex];
-                if (post.tags && post.tags.general) {
-                    // This helps the algorithm show similar content
-                }
             }
             saveLikedPosts();
             updateLikeButton();
             updateLikedCount();
+            updateCuratedTags();
         }
 
-        // Update liked count
         function updateLikedCount() {
             document.getElementById('likedCount').textContent = likedPosts.size;
         }
 
-        // Update stats
         function updateStats() {
             document.getElementById('imageCount').textContent = `${currentIndex + 1} / ${images.length}`;
             document.getElementById('totalImages').textContent = images.length;
             document.getElementById('currentIndex').textContent = currentIndex + 1;
         }
 
-        // Add tag
-        function addTag() {
-            const input = document.getElementById('tagInput');
-            const tag = input.value.trim().toLowerCase();
+        function addTag(tag) {
+            tag = tag.trim().toLowerCase();
 
-            if (!tag) {
-                showError('Please enter a tag');
-                return;
-            }
-
-            if (activeTags.includes(tag)) {
-                showError('Tag already added');
-                return;
-            }
-
+            if (!tag) return;
+            if (activeTags.includes(tag)) return;
             if (activeTags.length >= 10) {
-                showError('Maximum 10 tags allowed');
+                alert('Maximum 10 tags allowed');
                 return;
             }
 
             activeTags.push(tag);
-            input.value = '';
-            clearError();
+            saveActiveTags();
             renderTags();
             resetFeed();
             fetchImages();
+            closeSidebar();
+            closeSearch();
         }
 
-        // Remove tag
         function removeTag(tag) {
             activeTags = activeTags.filter(t => t !== tag);
+            saveActiveTags();
             renderTags();
             resetFeed();
             if (activeTags.length > 0) {
@@ -642,7 +1111,6 @@
             }
         }
 
-        // Render tags
         function renderTags() {
             const container = document.getElementById('activeTags');
             container.innerHTML = activeTags.map(tag => `
@@ -653,7 +1121,27 @@
             `).join('');
         }
 
-        // Reset feed
+        function renderCuratedTags() {
+            const container = document.getElementById('curatedTags');
+            if (curatedTags.length === 0) {
+                container.innerHTML = '<div style="font-size: 12px; color: #666;">Like more images to see curated tags</div>';
+                return;
+            }
+            container.innerHTML = curatedTags.map(tag => `
+                <div class="tag" style="cursor: pointer;" onclick="window.app.addTagFromCurated('${tag}')">
+                    ${tag}
+                    <span style="margin-left: 4px;">+</span>
+                </div>
+            `).join('');
+        }
+
+        function renderSuggestedTags() {
+            const container = document.getElementById('suggestedTags');
+            container.innerHTML = popularTags.map(tag => `
+                <div class="suggested-tag" onclick="window.app.addTag('${tag}')">${tag}</div>
+            `).join('');
+        }
+
         function resetFeed() {
             images = [];
             currentIndex = 0;
@@ -662,97 +1150,156 @@
             updateStats();
         }
 
-        // Show error
-        function showError(msg) {
-            const errorEl = document.getElementById('errorMessage');
-            errorEl.textContent = msg;
-            errorEl.className = 'error-message';
-            setTimeout(() => clearError(), 3000);
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('visible');
         }
 
-        // Clear error
-        function clearError() {
-            document.getElementById('errorMessage').textContent = '';
-            document.getElementById('errorMessage').className = '';
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('visible');
         }
 
-        // Event listeners
-        document.getElementById('addTagBtn').addEventListener('click', addTag);
-        document.getElementById('tagInput').addEventListener('keypress', e => {
-            if (e.key === 'Enter') addTag();
-        });
+        function closeSearch() {
+            document.getElementById('searchModal').classList.remove('active');
+            document.getElementById('tagSearchInput').value = '';
+        }
 
-        document.getElementById('likeBtn').addEventListener('click', () => {
-            toggleLike();
-            // Add some feedback
-            const btn = document.getElementById('likeBtn');
-            btn.style.transform = 'scale(1.3)';
-            setTimeout(() => {
-                btn.style.transform = '';
-            }, 100);
-        });
+        function openSearch() {
+            document.getElementById('searchModal').classList.add('active');
+            renderSuggestedTags();
+            document.getElementById('tagSearchInput').focus();
+        }
 
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            resetFeed();
-            fetchImages();
-        });
+        // Event Listeners
+        function setupEventListeners() {
+            // Menu
+            document.getElementById('menuBtn').addEventListener('click', openSidebar);
+            document.getElementById('closeSidebarBtn').addEventListener('click', closeSidebar);
+            document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
 
-        document.getElementById('clearTagsBtn').addEventListener('click', () => {
-            activeTags = [];
-            renderTags();
-            resetFeed();
-            updateStats();
-        });
+            // Search
+            document.getElementById('searchBtn').addEventListener('click', openSearch);
+            document.getElementById('searchCloseBtn').addEventListener('click', closeSearch);
 
-        // Scroll to next/prev
-        document.addEventListener('wheel', e => {
-            e.preventDefault();
-            if (e.deltaY > 0) {
-                nextImage();
-            } else {
-                prevImage();
-            }
-        }, { passive: false });
+            document.getElementById('tagSearchInput').addEventListener('keypress', e => {
+                if (e.key === 'Enter') {
+                    addTag(e.target.value);
+                }
+            });
 
-        // Touch swipe support
-        let touchStartY = 0;
-        document.addEventListener('touchstart', e => {
-            touchStartY = e.touches[0].clientY;
-        });
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+                    e.target.classList.add('active');
+                    document.getElementById(e.target.dataset.tab + '-tab').style.display = 'block';
+                });
+            });
 
-        document.addEventListener('touchend', e => {
-            const touchEndY = e.changedTouches[0].clientY;
-            const diff = touchStartY - touchEndY;
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) {
+            // Buttons
+            document.getElementById('likeBtn').addEventListener('click', toggleLike);
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                resetFeed();
+                fetchImages();
+            });
+            document.getElementById('clearTagsBtn').addEventListener('click', () => {
+                activeTags = [];
+                saveActiveTags();
+                renderTags();
+                resetFeed();
+                updateStats();
+            });
+            document.getElementById('clearLikesBtn').addEventListener('click', () => {
+                if (confirm('Clear all likes?')) {
+                    likedPosts.clear();
+                    saveLikedPosts();
+                    updateLikedCount();
+                    curatedTags = [];
+                    saveCuratedTags();
+                    renderCuratedTags();
+                }
+            });
+            document.getElementById('exportDataBtn').addEventListener('click', () => {
+                const data = {
+                    tags: activeTags,
+                    likes: Array.from(likedPosts),
+                    curatedTags: curatedTags
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'scrollowo-data.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            // Settings
+            document.getElementById('autoSuggestToggle').addEventListener('change', (e) => {
+                settings.autoSuggest = e.target.checked;
+                saveSettings();
+            });
+            document.getElementById('curateFromLikesToggle').addEventListener('change', (e) => {
+                settings.curateFromLikes = e.target.checked;
+                saveSettings();
+            });
+
+            // Scroll
+            document.addEventListener('wheel', e => {
+                e.preventDefault();
+                if (e.deltaY > 0) {
                     nextImage();
                 } else {
                     prevImage();
                 }
-            }
-        });
+            }, { passive: false });
 
-        // Keyboard support
-        document.addEventListener('keydown', e => {
-            if (e.key === 'ArrowDown' || e.key === ' ') {
-                e.preventDefault();
-                nextImage();
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                prevImage();
-            } else if (e.key === 'l' || e.key === 'L') {
-                toggleLike();
-            }
-        });
+            // Touch
+            let touchStartY = 0;
+            document.addEventListener('touchstart', e => {
+                if (!document.getElementById('searchModal').classList.contains('active')) {
+                    touchStartY = e.touches[0].clientY;
+                }
+            });
+            document.addEventListener('touchend', e => {
+                const touchEndY = e.changedTouches[0].clientY;
+                const diff = touchStartY - touchEndY;
+                if (Math.abs(diff) > 50) {
+                    if (diff > 0) {
+                        nextImage();
+                    } else {
+                        prevImage();
+                    }
+                }
+            });
 
-        // Expose app globally for tag removal
+            // Keyboard
+            document.addEventListener('keydown', e => {
+                if (e.key === 'ArrowDown' || e.key === ' ') {
+                    e.preventDefault();
+                    nextImage();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    prevImage();
+                } else if (e.key === 'l' || e.key === 'L') {
+                    toggleLike();
+                }
+            });
+        }
+
+        // Expose globally
         window.app = {
             removeTag,
+            addTag,
+            addTagFromCurated: (tag) => {
+                addTag(tag);
+            }
         };
 
         // Initialize
-        initLikedPosts();
-        updateStats();
+        init();
     </script>
 </body>
 </html>
