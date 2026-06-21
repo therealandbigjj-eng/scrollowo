@@ -18,10 +18,6 @@
             overflow: hidden;
         }
 
-        body.compact-mode .image-tags {
-            max-height: 0 !important;
-        }
-
         .container {
             width: 100vw;
             height: 100vh;
@@ -66,6 +62,12 @@
             font-weight: 700;
             flex: 1;
             text-align: center;
+        }
+
+        .version-display {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-left: 8px;
         }
 
         .auto-scroll-indicator {
@@ -125,13 +127,13 @@
             justify-content: center;
             position: relative;
             background: #111;
-            animation: slideInUp 0.5s ease-out;
+            animation: slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         @keyframes slideInUp {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(100%);
             }
             to {
                 opacity: 1;
@@ -146,12 +148,12 @@
             }
             to {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(100%);
             }
         }
 
         .image-container.exiting {
-            animation: slideOutDown 0.3s ease-in forwards;
+            animation: slideOutDown 0.5s ease-in forwards;
         }
 
         .image-wrapper {
@@ -161,6 +163,7 @@
             width: 100%;
             height: 100%;
             position: relative;
+            overflow: hidden;
         }
 
         .image-container img,
@@ -168,6 +171,29 @@
             max-width: 95%;
             max-height: 95%;
             object-fit: contain;
+            transition: transform 0.6s ease-out;
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.8) 0%, rgba(14, 165, 233, 0) 70%);
+            pointer-events: none;
+            animation: rippleEffect 0.6s ease-out forwards;
+        }
+
+        @keyframes rippleEffect {
+            from {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            to {
+                width: 300px;
+                height: 300px;
+                opacity: 0;
+                transform: translate(-50%, -50%);
+            }
         }
 
         .media-badge {
@@ -710,6 +736,10 @@
                 font-size: 18px;
             }
 
+            .version-display {
+                display: none;
+            }
+
             .button-group {
                 right: 10px;
                 bottom: 60px;
@@ -731,7 +761,10 @@
             <button class="header-btn" id="menuBtn" title="Menu">☰</button>
             <div class="header-title">scrollowo</div>
             <div id="autoScrollStatus" class="auto-scroll-indicator" style="display: none;">▶ Auto</div>
-            <button class="header-btn" id="searchBtn" title="Add tags">🔍</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="header-btn" id="searchBtn" title="Add tags">🔍</button>
+                <span class="version-display" id="versionDisplay">v0.0.0</span>
+            </div>
         </div>
 
         <div class="main-content">
@@ -841,18 +874,6 @@
                                 Track favorite artists
                             </label>
                         </div>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="skipViewedToggle">
-                                Skip viewed images
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="hideNSFWToggle">
-                                Hide NSFW content
-                            </label>
-                        </div>
                     </div>
 
                     <div class="sidebar-section">
@@ -865,8 +886,8 @@
                         </div>
                         <div class="setting-item">
                             <label>
-                                <input type="checkbox" id="compactViewToggle">
-                                Compact view
+                                <input type="checkbox" id="interactiveEffectsToggle">
+                                ✨ Interactive effects
                             </label>
                         </div>
                         <div class="setting-item">
