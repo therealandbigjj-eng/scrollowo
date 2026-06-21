@@ -1,11 +1,13 @@
 const API_BASE = 'https://e621.net/posts.json';
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 30;
 const LIKE_STORAGE_KEY = 'e621_liked_posts';
 const DISLIKE_STORAGE_KEY = 'e621_disliked_posts';
 const TAGS_STORAGE_KEY = 'e621_active_tags';
 const CURATED_TAGS_STORAGE_KEY = 'e621_curated_tags';
 const TOP_ARTISTS_STORAGE_KEY = 'e621_top_artists';
 const SETTINGS_STORAGE_KEY = 'e621_settings';
+const VIEWED_POSTS_STORAGE_KEY = 'e621_viewed_posts';
+const VERSION = '2.1.0';
 
 let images = [];
 let currentIndex = 0;
@@ -14,10 +16,12 @@ let curatedTags = [];
 let topArtists = {};
 let likedPosts = new Set();
 let dislikedPosts = new Set();
+let viewedPosts = new Set();
 let isLoading = false;
 let hasMorePages = true;
 let pageNumber = 1;
 let autoScrollTimer = null;
+let isScrolling = false;
 let settings = {
     autoSuggest: true,
     curateFromLikes: true,
@@ -27,7 +31,8 @@ let settings = {
     autoScrollInterval: 5,
     trackArtists: true,
     rainbowMode: false,
-    theme: 'dark'
+    theme: 'dark',
+    interactiveEffects: false
 };
 
 const popularTags = [
@@ -40,10 +45,14 @@ const particles = ['✨', '💬', '⭐', '💥', '🌟'];
 
 // Initialize
 function init() {
+    // Set version
+    document.getElementById('versionDisplay').textContent = `v${VERSION}`;
+    
     loadSettings();
     applyTheme();
     initLikedPosts();
     initDislikedPosts();
+    initViewedPosts();
     loadActiveTags();
     loadCuratedTags();
     loadTopArtists();
@@ -84,7 +93,7 @@ function applyTheme() {
 function loadSettings() {
     const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (stored) {
-        settings = JSON.parse(stored);
+        settings = { ...settings, ...JSON.parse(stored) };
     }
 }
 
@@ -103,6 +112,7 @@ function updateSettingsUI() {
     document.getElementById('trackArtistsToggle').checked = settings.trackArtists;
     document.getElementById('rainbowModeToggle').checked = settings.rainbowMode;
     document.getElementById('themeSelect').value = settings.theme;
+    document.getElementById('interactiveEffectsToggle').checked = settings.interactiveEffects;
 }
 
 // Liked Posts Management
@@ -129,6 +139,29 @@ function initDislikedPosts() {
 
 function saveDislikedPosts() {
     localStorage.setItem(DISLIKE_STORAGE_KEY, JSON.stringify(Array.from(dislikedPosts)));
+}
+
+// Viewed Posts Management
+function initViewedPosts() {
+    const stored = localStorage.getItem(VIEWED_POSTS_STORAGE_KEY);
+    if (stored) {
+        viewedPosts = new Set(JSON.parse(stored));
+    }
+    updateViewedCount();
+}
+
+function saveViewedPosts() {
+    localStorage.setItem(VIEWED_POSTS_STORAGE_KEY, JSON.stringify(Array.from(viewedPosts)));
+}
+
+function markAsViewed(postId) {
+    viewedPosts.add(postId);
+    saveViewedPosts();
+    updateViewedCount();
+}
+
+function updateViewedCount() {
+    document.getElementById('viewedCount').textContent = viewedPosts.size;
 }
 
 // Top Artists Management
@@ -260,7 +293,7 @@ function hideProgressBar() {
     }, 500);
 }
 
-// Fetch images from e621
+// Fetch images from e621 with infinite scrolling and randomization
 async function fetchImages() {
     if (isLoading || !hasMorePages) return;
 
@@ -271,11 +304,18 @@ async function fetchImages() {
     showProgressBar();
 
     try {
-        const tags = activeTags.join(' ');
+        // Build tag query - space separated for OR logic
+        let tagQuery = '';
+        if (activeTags.length > 0) {
+            tagQuery = activeTags.join(' ');
+        }
+
+        // Add random offset for better randomization
+        const randomOffset = Math.floor(Math.random() * 1000);
         const params = new URLSearchParams({
-            tags: tags,
+            tags: tagQuery,
             limit: BATCH_SIZE,
-            page: pageNumber,
+            page: pageNumber + randomOffset,
         });
 
         const response = await fetch(`${API_BASE}?${params}`);
@@ -293,12 +333,21 @@ async function fetchImages() {
             return;
         }
 
-        const validPosts = data.posts.filter(post => post.file && post.file.url);
-        images.push(...validPosts);
+        // Filter: valid files, not viewed (if enabled)
+        let validPosts = data.posts
+            .filter(post => post.file && post.file.url)
+            .filter(post => !viewedPosts.has(post.id)); // Blacklist filter
 
+        // Shuffle the valid posts for more randomness
+        validPosts = shuffleArray(validPosts);
+
+        images.push(...validPosts);
         pageNumber++;
-        if (validPosts.length < BATCH_SIZE) {
-            hasMorePages = false;
+
+        // Continue fetching if we're getting fewer results (infinite scroll)
+        if (validPosts.length < BATCH_SIZE / 2) {
+            // Fetch more automatically
+            setTimeout(fetchImages, 100);
         }
 
         updateStats();
@@ -317,6 +366,16 @@ async function fetchImages() {
     }
 
     isLoading = false;
+}
+
+// Shuffle array for randomization
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
 }
 
 // UI Functions
@@ -384,6 +443,11 @@ function renderImage() {
         media.alt = 'e621 image';
     }
 
+    // Add interactive effects
+    if (settings.interactiveEffects && media.tagName === 'IMG') {
+        addInteractiveEffects(media, wrapper);
+    }
+
     media.onerror = () => {
         nextImage();
     };
@@ -412,7 +476,7 @@ function renderImage() {
         ...(post.tags.character || []),
         ...(post.tags.species || [])
     ];
-    tags.innerHTML = allTags.slice(0, 20).map(tag => `<div class="image-tag" onclick="window.app.addTag('${tag}')">${tag}</div>`).join('');
+    tags.innerHTML = allTags.slice(0, 20).map(tag => `<div class="image-tag" onclick="window.app.addTag('${tag}')";>${tag}</div>`).join('');
 
     info.appendChild(tags);
     
@@ -427,17 +491,65 @@ function renderImage() {
     stack.innerHTML = '';
     stack.appendChild(container);
 
+    // Mark as viewed
+    markAsViewed(post.id);
     updateLikeButton();
     updateStats();
     updateArtistStats(post);
 
-    // Prefetch next image
-    if (currentIndex > images.length - 3 && hasMorePages && !isLoading) {
+    // Prefetch next images
+    if (currentIndex > images.length - 5 && hasMorePages && !isLoading) {
         fetchImages();
     }
 }
 
+// Add interactive effects to images
+function addInteractiveEffects(media, wrapper) {
+    const ripples = [];
+    
+    wrapper.style.position = 'relative';
+    wrapper.style.cursor = 'pointer';
+
+    wrapper.addEventListener('mousemove', (e) => {
+        const rect = wrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Tilt effect
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = (y - centerY) / 10;
+        const rotateY = (centerX - x) / 10;
+
+        media.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+        media.style.transition = 'transform 0.1s ease-out';
+    });
+
+    wrapper.addEventListener('mouseleave', () => {
+        media.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+        media.style.transition = 'transform 0.6s ease-out';
+    });
+
+    wrapper.addEventListener('click', (e) => {
+        const rect = wrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Create ripple effect
+        const ripple = document.createElement('div');
+        ripple.className = 'ripple';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        wrapper.appendChild(ripple);
+        
+        setTimeout(() => ripple.remove(), 600);
+    });
+}
+
 function nextImage() {
+    if (isScrolling) return;
+    isScrolling = true;
+    
     const current = document.querySelector('.image-container');
     if (current) {
         current.classList.add('exiting');
@@ -448,15 +560,22 @@ function nextImage() {
             } else if (hasMorePages && !isLoading) {
                 fetchImages();
             }
-        }, 300);
+            isScrolling = false;
+        }, 500);
+    } else {
+        isScrolling = false;
     }
 }
 
 function prevImage() {
+    if (isScrolling) return;
+    isScrolling = true;
+    
     if (currentIndex > 0) {
         currentIndex--;
         renderImage();
     }
+    isScrolling = false;
 }
 
 function updateLikeButton() {
@@ -517,11 +636,11 @@ function toggleDislike() {
 }
 
 function updateLikedCount() {
-    document.getElementById('likedCount').textContent = likedPosts.size + ' liked';
+    document.getElementById('likedCount').textContent = likedPosts.size;
 }
 
 function updateDislikedCount() {
-    document.getElementById('dislikedCount').textContent = dislikedPosts.size + ' disliked';
+    document.getElementById('dislikedCount').textContent = dislikedPosts.size;
 }
 
 function updateStats() {
@@ -690,11 +809,21 @@ function setupEventListeners() {
             renderCuratedTags();
         }
     });
+    document.getElementById('clearProgressBtn').addEventListener('click', () => {
+        if (confirm('Clear all viewed posts? This will reset your infinite scroll blacklist.')) {
+            viewedPosts.clear();
+            saveViewedPosts();
+            updateViewedCount();
+            resetFeed();
+            fetchImages();
+        }
+    });
     document.getElementById('exportDataBtn').addEventListener('click', () => {
         const data = {
             tags: activeTags,
             likes: Array.from(likedPosts),
             dislikes: Array.from(dislikedPosts),
+            viewed: Array.from(viewedPosts),
             curatedTags: curatedTags,
             topArtists: topArtists
         };
@@ -751,6 +880,11 @@ function setupEventListeners() {
     document.getElementById('themeSelect').addEventListener('change', (e) => {
         settings.theme = e.target.value;
         saveSettings();
+    });
+    document.getElementById('interactiveEffectsToggle').addEventListener('change', (e) => {
+        settings.interactiveEffects = e.target.checked;
+        saveSettings();
+        renderImage();
     });
 
     // Scroll
